@@ -35,7 +35,7 @@ OBJECTDIR=${CND_BUILDDIR}/${CND_CONF}/${CND_PLATFORM}
 
 # Object Files
 OBJECTFILES= \
-	${OBJECTDIR}/ChildProcess.o
+	${OBJECTDIR}/dolljm_hw4.o
 
 
 # C Compiler Flags
@@ -61,10 +61,10 @@ LDLIBSOPTIONS=
 Homework4_opt: ${OBJECTFILES}
 	${LINK.cc} -o Homework4_opt ${OBJECTFILES} ${LDLIBSOPTIONS} -lboost_system -lpthread -lmysqlpp
 
-${OBJECTDIR}/ChildProcess.o: ChildProcess.cpp
+${OBJECTDIR}/dolljm_hw4.o: dolljm_hw4.cpp
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
-	$(COMPILE.cc) -O2 -Wall -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/ChildProcess.o ChildProcess.cpp
+	$(COMPILE.cc) -O2 -Wall -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/dolljm_hw4.o dolljm_hw4.cpp
 
 # Subprojects
 .build-subprojects:

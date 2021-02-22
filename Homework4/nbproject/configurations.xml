@@ -13,7 +13,7 @@
     <logicalFolder name="SourceFiles"
                    displayName="Source Files"
                    projectFiles="true">
-      <itemPath>ChildProcess.cpp</itemPath>
+      <itemPath>dolljm_hw4.cpp</itemPath>
     </logicalFolder>
     <logicalFolder name="TestFiles"
                    displayName="Test Files"
@@ -46,9 +46,9 @@
           <commandLine>-lboost_system -lpthread -lmysqlpp</commandLine>
         </linkerTool>
       </compileType>
-      <item path="ChildProcess.cpp" ex="false" tool="1" flavor2="0">
-      </item>
       <item path="ChildProcess.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="dolljm_hw4.cpp" ex="false" tool="1" flavor2="0">
       </item>
     </conf>
     <conf name="Release" type="1">
@@ -77,9 +77,9 @@
           <commandLine>-lboost_system -lpthread -lmysqlpp</commandLine>
         </linkerTool>
       </compileType>
-      <item path="ChildProcess.cpp" ex="false" tool="1" flavor2="0">
-      </item>
       <item path="ChildProcess.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="dolljm_hw4.cpp" ex="false" tool="1" flavor2="0">
       </item>
     </conf>
   </confs>

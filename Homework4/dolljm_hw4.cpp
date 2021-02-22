@@ -1,5 +1,5 @@
-#ifndef CHILD_PROCESS_CPP
-#define CHILD_PROCESS_CPP
+#ifndef DOLLJM_HW4_CPP
+#define DOLLJM_HW4_CPP
 
 /**
  * This source file contains the implementation for the various
