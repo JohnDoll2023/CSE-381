@@ -5,6 +5,7 @@
                    displayName="Header Files"
                    projectFiles="true">
       <itemPath>ChildProcess.h</itemPath>
+      <itemPath>dolljm_hw4.h</itemPath>
     </logicalFolder>
     <logicalFolder name="ResourceFiles"
                    displayName="Resource Files"
@@ -50,6 +51,8 @@
       </item>
       <item path="dolljm_hw4.cpp" ex="false" tool="1" flavor2="0">
       </item>
+      <item path="dolljm_hw4.h" ex="false" tool="3" flavor2="0">
+      </item>
     </conf>
     <conf name="Release" type="1">
       <toolsSet>
@@ -80,6 +83,8 @@
       <item path="ChildProcess.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="dolljm_hw4.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="dolljm_hw4.h" ex="false" tool="3" flavor2="0">
       </item>
     </conf>
   </confs>
