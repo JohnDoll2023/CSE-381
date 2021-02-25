@@ -71,12 +71,10 @@ public:
      * sends appropriate lines to be read word by word into a vector. After this
      * the first word is checked to see what command to execute, and then from
      * there our data is sent off to helper methods
-     * @param is input stream cin
-     * @param prompt sends > to user after completed entry
-     * @param parallel checks to see if parallel command has been executed
+     * @param is input stream cin or other specified input
+     * @param prompt sends > or specified string to user after completed entry
      */
-    void process(std::istream& is = std::cin, const std::string& prompt = "> ",
-                 bool parallel = false);
+    void process(std::istream& is = std::cin, const std::string& prompt = "> ");
     
     /**
      * Prints the running command with the whole command sent to output
@@ -85,25 +83,29 @@ public:
     void print(StrVec cmd);
     
     /**
-     * Runs the commands from the url in parallel fashion (one right after
-     * another without regard for one another)
-     * @param cmd contains parallel command and url
+     * Checks whether the specified input should be run or parallel or serial
+     * fashion and then sends off to helper method accordingly
+     * @param cmd contains list of commands to be run
      */
-    void parallelCmd(StrVec cmd);
-    
-    /**
-     * Runs the command from the url in serial fashion (waits for previous task
-     * to finish)
-     * @param cmd contains serial command and url
-     */
-    void serialCmd(StrVec cmd);
+    void parallelOrSerial(StrVec cmd);
     
     /**
      * Gets url and disassembles it so that we can create stream from it to
      * process incoming commands
      * @param url the url to be processed
+     * @param parallel true if commands are supposed to be run parallel and
+     * false otherwise
      */
-    void processURL(std::string url);
+    void processURL(std::string url, bool parallel);
+    
+    /**
+     * Reads the input stream and sends lines with commands to a vector, which
+     * is then looped through to print our running statements, and then is 
+     * looped through to fork our commands. Then we loop through the vector once
+     * more to get our exit codes before finishing
+     * @param is the input stream to read the data from to be executed
+     */
+    void processParallel(std::istream& is);
     
     /**
      * Disassembles the url so that we can form a connection to it and read from

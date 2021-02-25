@@ -5,14 +5,15 @@
  * Copyright (C) 2020 raodm@miamioh.edu
  */
 
+#include <boost/asio.hpp>
+#include <boost/format.hpp>
 #include <iostream>
 #include <string>
 #include <unordered_map>
 #include <sstream>
 #include <fstream>
 #include <iomanip>
-#include <boost/asio.hpp>
-#include <boost/format.hpp>
+
 
 /** A convenience format string to generate results in HTML
     format. Note that this format string has place holders in the form

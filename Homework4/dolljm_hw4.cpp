@@ -88,12 +88,11 @@ dolljm_hw4::wait() const {
 // Reads input from user and sends back appropriate output with use of helper
 // methods
 void
-dolljm_hw4::process(std::istream& is, const std::string& prompt, bool 
-                      parallel) {
+dolljm_hw4::process(std::istream& is, const std::string& prompt) {
     // create line and word to iterate through text input
     std::string line, word;
     // keeps continuous input coming from user unless they enter "exit"
-    while (std::cout << prompt, std::getline(std::cin, line) && line !="exit") {
+    while (std::cout << prompt, std::getline(is, line) && line !="exit") {
         // processes line if it is not empty or a comment
         if (!line.empty() && line != "\r" && line.find_first_of("#", 0) != 0) {
             // create vector and stringstream to hold command line input
@@ -105,17 +104,14 @@ dolljm_hw4::process(std::istream& is, const std::string& prompt, bool
             }
             // checks which method of execution was selected and runs
             // correspondingly for parallel, serial, and unspecified
-            if (cmd[0] == "PARALLEL") {
-                parallelCmd(cmd);
-            } else if (cmd[0] == "SERIAL") {
-                serialCmd(cmd);
+            if (cmd[0] == "PARALLEL" || cmd[0] == "SERIAL") {
+                parallelOrSerial(cmd);
             } else {
+                print(cmd);
                 // forks process and then calls myExec
                 int pid = forkNexec(cmd);
                 // runs if parent process, prints out command and exit code
                 if (pid != 0) {
-                    print(cmd);
-                    waitpid(pid, nullptr, 0);
                     std::cout << "Exit code: " << wait() << std::endl;
                 }
             }
@@ -123,34 +119,78 @@ dolljm_hw4::process(std::istream& is, const std::string& prompt, bool
     }
 }
 
-// parallel command calls helper method
+// determines if parallel or serial command has been called and sends to helper
 void
-dolljm_hw4::parallelCmd(StrVec cmd) {
-    processURL(cmd[1]);
+dolljm_hw4::parallelOrSerial(StrVec cmd) {
+    if (cmd[0] == "PARALLEL") {
+        processURL(cmd[1], true);
+    } else {
+        processURL(cmd[1], false);
+    }
 }
 
-// serial command calls helper method
+// handles cases where processes are supposed to be done parallel
 void
-dolljm_hw4::serialCmd(StrVec cmd) {
-    processURL(cmd[1]);
+dolljm_hw4::processParallel(std::istream& is) {
+    std::string line, word;
+    std::vector<StrVec> paraCmd;
+    // keeps continuous input coming from user unless they enter "exit"
+    while (std::getline(is, line) && line !="exit") {
+        // processes line if it is not empty or a comment
+        StrVec cmd;
+        if (!line.empty() && line != "\r" && line.find_first_of("#", 0) != 0) {
+            // create vector and stringstream to hold command line input
+            std::istringstream is(line);
+            // add each word from command line to a vector
+            while (is >> std::quoted(word)) { 
+                cmd.push_back(word); 
+            }
+        }
+        // add each vector of a single command to my vector of parallel commands
+        cmd.size() != 0 ? paraCmd.push_back(cmd) : (void)0;
+    }
+    // print out that each command is running
+    for (size_t i = 0; i < paraCmd.size(); i++) { 
+        print(paraCmd[i]); 
+    }
+    // vector that holds our objects that call forkNexec
+    std::vector<dolljm_hw4> waiters;
+    // creates a class object and uses it to call forkNexec. Adds this object to
+    // a vector of objects
+    for (size_t i = 0; i < paraCmd.size(); i++) {
+        dolljm_hw4 paraFork;
+        paraFork.forkNexec(paraCmd[i]);
+        waiters.push_back(paraFork);
+    }
+    // prints out exit codes by looping through vector of objects and calling
+    // wait on them to obtain their exit code
+    for (size_t i = 0; i < waiters.size(); i++) {
+        std::cout << "Exit code: " << waiters[i].wait() << std::endl;
+    }
 }
 
 // goes through URL and reads in data from it
 void
-dolljm_hw4::processURL(std::string url) {
+dolljm_hw4::processURL(std::string url, bool parallel) {
     // create vector to store words from url
     std::vector<std::string> cmd;
     // create helper strings to get the specific url details
-    std::string hostname, port, path, word;
+    std::string hostname, port, path, line;
     // call helper method to give us the parts of the url we need
     std::tie(hostname, port, path) = breakDownURL(url);
     // creates a stream from url with hostname and port
     boost::asio::ip::tcp::iostream data(hostname, port);
+    data << "GET "   << path     << " HTTP/1.1\r\n"
+         << "Host: " << hostname << "\r\n"
+         << "Connection: Close\r\n\r\n";
     // go through all unneeded http response headers
-    for (std::string hdr; std::getline(data, hdr) &&
-             !hdr.empty() && hdr != "\r";) {}
+    for (std::string h; std::getline(data, h) && !h.empty() && h != "\r";) {}
     // send our commands over to be processed
-    process(data, "> ", false);
+    if (parallel) {
+        processParallel(data);
+    } else {
+        process(data, "");
+    }
 }
 
 // returns us the pieces of the url that we need
