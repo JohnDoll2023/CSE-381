@@ -35,7 +35,7 @@ OBJECTDIR=${CND_BUILDDIR}/${CND_CONF}/${CND_PLATFORM}
 
 # Object Files
 OBJECTFILES= \
-	${OBJECTDIR}/Timer.o
+	${OBJECTDIR}/dolljm_hw6.o
 
 
 # C Compiler Flags
@@ -56,15 +56,15 @@ LDLIBSOPTIONS=
 
 # Build Targets
 .build-conf: ${BUILD_SUBPROJECTS}
-	"${MAKE}"  -f nbproject/Makefile-${CND_CONF}.mk Timer_opt
+	"${MAKE}"  -f nbproject/Makefile-${CND_CONF}.mk Homework6_opt
 
-Timer_opt: ${OBJECTFILES}
-	${LINK.cc} -o Timer_opt ${OBJECTFILES} ${LDLIBSOPTIONS} -lboost_system -lpthread -lmysqlpp
+Homework6_opt: ${OBJECTFILES}
+	${LINK.cc} -o Homework6_opt ${OBJECTFILES} ${LDLIBSOPTIONS} -lboost_system -lpthread -lmysqlpp
 
-${OBJECTDIR}/Timer.o: Timer.cpp
+${OBJECTDIR}/dolljm_hw6.o: dolljm_hw6.cpp
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
-	$(COMPILE.cc) -O2 -Wall -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/Timer.o Timer.cpp
+	$(COMPILE.cc) -O2 -Wall -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/dolljm_hw6.o dolljm_hw6.cpp
 
 # Subprojects
 .build-subprojects:

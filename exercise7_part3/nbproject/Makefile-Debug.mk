@@ -35,7 +35,7 @@ OBJECTDIR=${CND_BUILDDIR}/${CND_CONF}/${CND_PLATFORM}
 
 # Object Files
 OBJECTFILES= \
-	${OBJECTDIR}/Timer.o
+	${OBJECTDIR}/exercise7_part3.o
 
 
 # C Compiler Flags
@@ -56,15 +56,15 @@ LDLIBSOPTIONS=
 
 # Build Targets
 .build-conf: ${BUILD_SUBPROJECTS}
-	"${MAKE}"  -f nbproject/Makefile-${CND_CONF}.mk Timer
+	"${MAKE}"  -f nbproject/Makefile-${CND_CONF}.mk exercise7_part3
 
-Timer: ${OBJECTFILES}
-	${LINK.cc} -o Timer ${OBJECTFILES} ${LDLIBSOPTIONS} -lboost_system -lpthread -lmysqlpp
+exercise7_part3: ${OBJECTFILES}
+	${LINK.cc} -o exercise7_part3 ${OBJECTFILES} ${LDLIBSOPTIONS} -lboost_system -lpthread -lmysqlpp
 
-${OBJECTDIR}/Timer.o: Timer.cpp
+${OBJECTDIR}/exercise7_part3.o: exercise7_part3.cpp
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -Wall -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/Timer.o Timer.cpp
+	$(COMPILE.cc) -g -Wall -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/exercise7_part3.o exercise7_part3.cpp
 
 # Subprojects
 .build-subprojects:
