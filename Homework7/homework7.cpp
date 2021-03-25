@@ -8,11 +8,8 @@
 #include <string>
 #include <vector>
 #include <fstream>
-#include <iterator>
 #include <algorithm>
 #include <thread>
-#include <cmath>
-#include <unordered_map>
 
 using namespace std;
 
@@ -26,22 +23,24 @@ StrVec loadWords(const string file);
 const StrVec dict = loadWords("dictionary.txt");
 
 /**
- * calculates how different one word is from another word
+ * calculates how different one word is from another word, taken from 
+ * wikipedia: https://en.wikipedia.org/wiki/Levenshtein_distance iterative
+ * with full matrix pseudo code
  * @param s first word
  * @param t second word
  * @return the difference in characters
  */
 int levenshteinDistance(string s, string t) {
     // get size of the strings
-    int n = t.size();
     int m = s.size();
+    int n = t.size();
     // create matrix for computing character differences
-    std::vector<std::vector<int>> d(m + 1, std::vector<int>(n + 1));
-    // 
+    vector<vector<int>> d(m + 1, vector<int>(n + 1));
+    // filling in the edge values with incrementing numbers representing the
+    // letter location in the string
     for (int i = 1; i <= m; i++) {
         d[i][0] = i;
     }
-    //
     for (int i = 1; i <= n; i++) {
         d[0][i] = i;
     }
@@ -50,58 +49,65 @@ int levenshteinDistance(string s, string t) {
         for (int i = 1; i <= m; i++) {
             int substitutionCost;
             // if letters are equal, then we don't add to our difference
-            if (s[i] == t[j]) {
+            if (s[i - 1] == t[j - 1]) {
                 substitutionCost = 0;
             } else {
                 substitutionCost = 1;
             }
             // difference in characters at location is updated in matrix
-            d[i][j] = min(d[i - 1][j] + 1, min(d[i][j - 1] + 1, d[i - 1][j - 1] 
-                    + substitutionCost));
+            d[i][j] = min({d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + 
+                           substitutionCost});
          }
     }
     // return overall word difference
     return d[m][n];
 }
 
-void threadMain(StrVec wordList, vector<vector<string>>& results, size_t start, 
-                size_t end) {
-    // StrVec words;
-//    for (size_t i = start; i < end; i++) {
-//        words[i - start] = wordList[i];
-//    }
-    for (size_t i = start; i < end; i++) {
-        for (size_t j = 0; j < dict.size(); j++) {
-            if (binary_search(dict.begin(), dict.end(), wordList[i])) {
-                results[i][j] = "  0:" + wordList[i];
-                break;
-            }
-            int lDist = levenshteinDistance(dict[j], wordList[i]);
-            if (lDist < 4) {
-                results[i][j] = " " + to_string(lDist) + ":" + dict[j];
-            }
+string checker(string word) {
+    // create string to return and vector of strings to hold output before it is
+    // cleaned
+    string ret;
+    StrVec outcomes;
+    // send word to lowercase
+    std::transform(word.begin(), word.end(), word.begin(), ::tolower);
+    // check levenshtein distance of the word and store results to vector if it
+    // is lower than 4
+    for (size_t i = 0; i < dict.size(); i++) {
+        int lDist = levenshteinDistance(dict[i], word);
+        if (lDist < 4) {
+            outcomes.push_back(to_string(lDist) + ":" + dict[i]);
         }
     }
+    // sort our outcomes in order from smallest levenshtein distance to largest
+    sort(outcomes.begin(), outcomes.end());
+    // add outputs to return string
+    for (int i = 0; i < min(static_cast<int>(outcomes.size()), 5); i++) {
+        // if distance is 0 then this is the only word that should be returned
+        if (outcomes[i].find("0") != string::npos) {
+            ret = outcomes[i];
+            break;
+        } else if (i + 1 != min(static_cast<int>(outcomes.size()), 5)) {
+            // add word with comma after for next word
+            ret += outcomes[i] + ", ";
+        } else {
+            // last word in ret string
+            ret += outcomes[i];
+        }
+    }
+    return ret;
 }
 
 /**
- * Prints out results of program
- * @param results the vector of vector of strings to be printed
- * @param wordList contains original words to match to results vector
+ * Initiates threads to run program
+ * @param wordList list of words to be checked against the dictionary
+ * @param results the differences between words and printable output
+ * @param start where the array begins traversing
+ * @param end where the array ends traversing
  */
-void print(vector<vector<string>> results, StrVec wordList) {
-    for (size_t i = 0; i < wordList.size(); i++) {
-        cout << wordList[i] << " --";
-        for (int j = 0; j < min(static_cast<int>(results[i].size()), 5); j++) {
-            cout << results[i][j];
-            if (results[i][j].find("0") != string::npos) {
-                break;
-            }
-            if (j + 1 != min(static_cast<int>(results[i].size()), 5)) {
-                cout << ",";
-            }
-        }
-        cout << endl;
+void threadMain(StrVec wordList, StrVec& results, size_t start, 
+                size_t end) {
+    for (size_t i = start; i < end; i++) {
+        results[i] = checker(wordList[i]);
     }
 }
 
@@ -118,18 +124,22 @@ StrVec loadWords(const string file) {
     ifstream inFile(file);
     // loop to iterate through file and read every word into the vector
     while (getline(inFile, word)) {
-        // need to move this line
-        std::transform(word.begin(), word.end(), word.begin(), ::tolower);
         words.push_back(word);
     }
     return words;
 }
 
+/**
+ * Main method driving the program
+ * @param argc number of arguments the program received
+ * @param argv the arguments in a char array
+ * @return 0 if success, a different number otherwise
+ */
 int main(int argc, char* argv[]) {
     // loads in words to be checked for in the dictionary
     const StrVec words = loadWords(argv[1]);
     // creates vector for printable output later
-    vector<vector<string>> results;
+    StrVec results(words.size());
     // vector of threads
     vector<thread> threads;
     // determines number of threads
@@ -148,11 +158,9 @@ int main(int argc, char* argv[]) {
     for (auto& t : threads) {
         t.join();
     }
-    // sort results
-    for (size_t i = 0; i < results.size(); i++) {
-        sort(results[i].begin(), results[i].end());
-    }
     // print results
-    print(results, words);
+    for (size_t i = 0; i < words.size(); i++) {
+        cout << words[i] << " -- " << results[i] << endl;
+    }
     return 0;
 }
