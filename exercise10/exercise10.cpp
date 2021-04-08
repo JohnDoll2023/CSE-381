@@ -21,6 +21,10 @@ void increment(int& entry);
 /** NOTE: To keep things simple for exams, you may add global
     variables as you see fit */
 
+namespace shared {
+    std::atomic<int> num = ATOMIC_VAR_INIT(0);
+}
+
 /**
  * The following printInOrder method is called from many threads, with
  * id (i.e., 0, 1, 2, ...) indicating the logical number of
@@ -34,7 +38,12 @@ void increment(int& entry);
  */
 void printInOrder(const int id, std::string data) {
     // Implement this method.
-    
+    // while loop to iteratae until it is this thread's turn to print (when id
+    // is equal to the shared value num
+    while (shared::num != id) {}
+    // print and increment num
+    std::cout << "id " << id << ": " << data << std::endl;
+    shared::num++;
 }
 
 /**
@@ -62,6 +71,12 @@ void producer(std::vector<int>& q, std::mutex& qMutex,
              std::condition_variable& qCondVar, int n) {
     // Impelement this method so that it works consistently with the
     // consumer method (see further below)
+    if (q.size() == 5) {
+        std::unique_lock<std::mutex> lock(qMutex);
+        // Wait until queue is not empty
+        qCondVar.wait(lock, [&q]{ return q.size() < 5; });
+    }
+    
 }
 
 
@@ -84,10 +99,15 @@ std::vector<int> countDigits(const std::vector<int> values, int n) {
     // Since it is a small method it has been placed here to
     // streamline working on this exam problem.
     auto thrMain = [&](int id) {
+        std::vector<std::mutex> lock;
             for (size_t i = id; (i < values.size()); i += n) {
+                std::mutex mut;
+                lock[id] = mut;
+                mut.lock();
                 // Use helper method to increment appropriate counter
                 const int roomNum = values[i] % 10;
                 increment(room[roomNum]);
+                mut.unlock();
             }
         };
 

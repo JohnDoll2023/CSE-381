@@ -32,24 +32,24 @@ void SQLAir::selectQuery(CSV& csv, bool mustWait, StrVec colNames,
     colNames = colNames[0] == "*" ? csv.getColumnNames() : colNames;
     // Set counter to 0
     int numSelects = 0;
-    numThreads++;
     // do while so that code executes once before checking to see if mustWait is
     // true in which case we keep looping until a row is printed
     do {
         // loop through all rows in the file database
         for (auto& row : csv) {
             // Determine if this row matches "where" clause condition, if 
-            // any
+            // any, and lock rows for checking
+            row.rowMutex.lock();
             const bool isMatch = (whereColIdx == -1) ? true :
                     matches(row.at(whereColIdx), cond, value);
+            // unlock rows after we check them
+            row.rowMutex.unlock();
             // if there is a match, increment counter and print the output
             if (isMatch) { 
                 numSelects++;
-                if (numSelects == 1) {
-                    os << colNames << std::endl;
-                }
                 // call method to create query to be printed
-                std::string line = getOutput(csv, colNames, row);
+                std::string line = getOutput(csv, colNames, row, numSelects, 
+                        os);
                 // print query results
                 os << line << std::endl;
             }
@@ -71,17 +71,21 @@ SQLAir::updateQuery(CSV& csv,  bool mustWait, StrVec colNames, StrVec values,
         const std::string& value, std::ostream& os)  {
     // Update each row that matches an optional condition.
     int count = 0;
-    numThreads++;
     // This is a partial implementation to show the simple logic of updating
     // user-specified columns in a given row(s).  You can further modify the
     // implementation as you see fit.
     do {
+        // loop through all rows to see if a matching row needs updated
         for (auto& row : csv) {
+            // lock thread so that we can carefully check to see if the rows
+            // match what we are looking for and aren't changed by another
+            // thread while we are checking
+            std::lock_guard<std::mutex> lock(row.rowMutex);
             if (whereColIdx == -1 || matches(row.at(whereColIdx), cond, 
-                    value)) { count++;
+                    value)) { 
+                count++;
                 // In the row, update values for each column specified by 
                 // the user
-                std::lock_guard<std::mutex> lock(row.rowMutex);
                 for (size_t i = 0; (i < colNames.size()); i++) {
                     // lock during updates
                     // Guard lock(CSV.csvMutex);
@@ -94,17 +98,28 @@ SQLAir::updateQuery(CSV& csv,  bool mustWait, StrVec colNames, StrVec values,
                 }
             }
         }
+        // if nothing was printed and mustWait is true, then we sleep this
+        // thread and wait for another thread to finish before checking again
+        // until we finally get a row to print
         if (count == 0 && mustWait) {
             std::unique_lock<std::mutex> lock(csv.csvMutex);
             csv.csvCondVar.wait(lock);
         }
+        // do once and keep doing if nothing is printed and mustWait is true
     } while (count == 0 && mustWait);
+    // print and notify other threads that this thread is completed
     os << count << " row(s) updated." << std::endl;
     csv.csvCondVar.notify_all();
 }
 
 std::string
-SQLAir::getOutput(CSV& csv, StrVec colNames, CSVRow row) {
+SQLAir::getOutput(CSV& csv, StrVec colNames, CSVRow row, int numSelects,
+                std::ostream& os) {
+    // print colNames if this is our first time through the loop
+    // since they are our headers
+    if (numSelects == 1) {
+        os << colNames << std::endl;
+    }
     // lock the program so that when we are accessing the file, no values are 
     // changed
     std::lock_guard<std::mutex> lock(row.rowMutex);
@@ -235,6 +250,8 @@ SQLAir::clientThread(TcpStreamPtr client) {
         // Send response back to the client.
         *client << HTTPRespHeader << resp.size() << "\r\n\r\n" << resp;
     }
+    // decrement thread counter as thread has finished, notify other threads
+    // that this thread is completed
     numThreads--;
     thrCond.notify_all();
 }
@@ -248,8 +265,12 @@ SQLAir::runServer(boost::asio::ip::tcp::acceptor& server, const int maxThr) {
         // Wait for a client to connect
         server.accept(*client->rdbuf());
         // Now we have a I/O stream to talk to the client.
+        // lock and wait for other threads to finish if the max amount of
+        // threads hasa been reached
         std::unique_lock<std::mutex> lock(maxThrMutex);
         thrCond.wait(lock, [maxThr, this] {return numThreads < maxThr;});
+        // increment thread counter 
+        numThreads++;
         std::thread thr(&SQLAir::clientThread, this, client);
         thr.detach();  // Run independently
     }    

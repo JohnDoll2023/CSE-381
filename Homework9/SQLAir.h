@@ -247,14 +247,18 @@ public:
     
     
     /**
-     * Creates string output if there are applicable outputs from the query
+     * Creates string output if there are applicable outputs from the query and 
+     * prints column names if applicable
      * @param csv the file database
      * @param colNames determines what part of a record will be included in 
      *        output
      * @param row the records in the file database
+     * @param numSelect the number of iteration the loop is on
+     * @param os output stream for colNames if applicable
      * @return string to be printed
      */
-    std::string getOutput(CSV& csv, StrVec colNames, CSVRow row);
+    std::string getOutput(CSV& csv, StrVec colNames, CSVRow row, int numSelect,
+                        std::ostream& os);
 
 protected:
     /**
